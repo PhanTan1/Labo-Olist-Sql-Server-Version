@@ -26,8 +26,8 @@ DROP TABLE IF EXISTS geolocation;
     );
 """
 orderItems_table_sql ="""
-DROP TABLE IF EXISTS orderItems;
-CREATE TABLE orderItems (
+DROP TABLE IF EXISTS order_items;
+CREATE TABLE order_items (
     order_id UUID,
     order_item_id SMALLINT NOT NULL,
     product_id UUID NOT NULL,
@@ -36,42 +36,39 @@ CREATE TABLE orderItems (
     price DECIMAL (8,2) NOT NULL,
     freight_value DECIMAL(8,2) NOT NULL,
 
-    CONSTRAINT PK__orderItems PRIMARY KEY (order_id)
+    CONSTRAINT PK__order_items PRIMARY KEY (order_id, order_item_id)
 );
     """
 orderPayments_table_sql = """
-    DROP TABLE IF EXISTS orderPayments;
-
-    CREATE TABLE orderPayments (
-            order_id UUID,
+DROP TABLE IF EXISTS order_payments;
+CREATE TABLE order_payments (
+    order_id UUID,
     payment_sequential SMALLINT NOT NULL,
     payment_type VARCHAR(11) NOT NULL,
     payment_installments INT NOT NULL,
     payment_value DECIMAL(8,2) NOT NULL,
 
-    CONSTRAINT PK__orderPayments PRIMARY KEY (order_id)
+    CONSTRAINT PK__order_payments PRIMARY KEY (order_id)
 );
     """
 orderReviews_table_sql = """
-    DROP TABLE IF EXISTS orderReviews;
+DROP TABLE IF EXISTS order_reviews;
+CREATE TABLE order_reviews (
+    review_id UUID,
+    order_id UUID NOT NULL,
+    review_score INT NOT NULL,
+    review_comment_title VARCHAR (50),
+    review_comment_message VARCHAR (255),
+    review_creation_date TIMESTAMP NOT NULL,
+    review_answer_timestamp TIMESTAMP NOT NULL,
 
-    CREATE TABLE orderReviews (
-        review_id UUID,
-        order_id UUID NOT NULL,
-        review_score INT NOT NULL,
-        review_comment_title VARCHAR (50),
-        review_comment_message VARCHAR (255),
-        review_creation_date TIMESTAMP NOT NULL,
-        review_answer_timestamp TIMESTAMP NOT NULL,
-
-    CONSTRAINT PK__orderReviews PRIMARY KEY (review_id),
+    CONSTRAINT PK__order_reviews PRIMARY KEY (review_id),
     CONSTRAINT review_score CHECK (review_score BETWEEN 1 AND 5)
 );
 """
 orders_table_sql = """
-    DROP TABLE IF EXISTS orders;
-
-    CREATE TABLE orders (
+DROP TABLE IF EXISTS orders;
+CREATE TABLE orders (
         order_id UUID,
         customer_id UUID NOT NULL,
         order_status VARCHAR (11) NOT NULL,
@@ -85,12 +82,11 @@ orders_table_sql = """
 );
     """
 products_table_sql = """
-    DROP TABLE IF EXISTS products;
-
-    CREATE TABLE products (
+DROP TABLE IF EXISTS products;
+CREATE TABLE products (
         product_id UUID,
         product_category_name VARCHAR (60),
-        product_name_lenght VARCHAR (11),
+        product_name_length VARCHAR (11),
         product_description_lenght SMALLINT,
         product_photos_qty SMALLINT,
         product_weight_g INT,
@@ -103,13 +99,12 @@ products_table_sql = """
     """
 
 sellers_table_sql = """
-    DROP TABLE IF EXISTS sellers;
-
-    CREATE TABLE sellers (
-        seller_id UUID,
-        seller_zip_code_prefix VARCHAR(5) NOT NULL,
-        seller_city VARCHAR(45) NOT NULL,
-        seller_state VARCHAR(2) NOT NULL,
+DROP TABLE IF EXISTS sellers;
+CREATE TABLE sellers (
+    seller_id UUID,
+    seller_zip_code_prefix VARCHAR(5) NOT NULL,
+    seller_city VARCHAR(45) NOT NULL,
+    seller_state VARCHAR(2) NOT NULL,
 
     CONSTRAINT PK__sellers PRIMARY KEY (seller_id),
     CONSTRAINT seller_zip_code_prefix_valid CHECK (seller_zip_code_prefix ~ '^\d{4,5}$'),
@@ -117,13 +112,13 @@ sellers_table_sql = """
 );
     """
 product_category_name_translation_table_sql = """
-    DROP TABLE IF EXISTS product_category_name_translation;
+DROP TABLE IF EXISTS product_category_name_translation;
+CREATE TABLE product_category_name_translation (
+    product_category_name VARCHAR (50) NOT NULL,
+    product_category_name_english VARCHAR (50) NOT NULL,
+    
+    CONSTRAINT unique_category_pair UNIQUE(product_category_name, product_category_name_english)
 
-    CREATE TABLE product_category_name_translation (
-        product_category_name VARCHAR (50) NOT NULL,
-        product_category_name_english VARCHAR (50) NOT NULL,
-        UNIQUE(product_category_name),
-        UNIQUE(product_category_name_english)
 );
     """
 
