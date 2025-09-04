@@ -29,7 +29,7 @@ orderItems_table_sql ="""
 DROP TABLE IF EXISTS orderItems;
 CREATE TABLE orderItems (
     order_id UUID,
-    order_item_id INT NOT NULL,
+    order_item_id SMALLINT NOT NULL,
     product_id UUID NOT NULL,
     seller_id UUID NOT NULL,
     shipping_limit_date TIMESTAMP NOT NULL,
@@ -44,7 +44,7 @@ orderPayments_table_sql = """
 
     CREATE TABLE orderPayments (
             order_id UUID,
-    payment_sequential INT NOT NULL,
+    payment_sequential SMALLINT NOT NULL,
     payment_type VARCHAR(11) NOT NULL,
     payment_installments INT NOT NULL,
     payment_value DECIMAL(8,2) NOT NULL,
@@ -68,6 +68,64 @@ orderReviews_table_sql = """
     CONSTRAINT review_score CHECK (review_score BETWEEN 1 AND 5)
 );
 """
+orders_table_sql = """
+    DROP TABLE IF EXISTS orders;
+
+    CREATE TABLE orders (
+        order_id UUID,
+        customer_id UUID NOT NULL,
+        order_status VARCHAR (11) NOT NULL,
+        order_purchase_timestamp TIMESTAMP NOT NULL,
+        order_approved_at TIMESTAMP,
+        order_delivered_carrier_date TIMESTAMP,
+        order_delivered_customer_date TIMESTAMP,
+        order_estimated_delivery_date TIMESTAMP NOT NULL,
+
+    CONSTRAINT PK__orders PRIMARY KEY (order_id)
+);
+    """
+products_table_sql = """
+    DROP TABLE IF EXISTS products;
+
+    CREATE TABLE products (
+        product_id UUID,
+        product_category_name VARCHAR (60),
+        product_name_lenght VARCHAR (11),
+        product_description_lenght SMALLINT,
+        product_photos_qty SMALLINT,
+        product_weight_g INT,
+        product_length_cm SMALLINT,
+        product_height_cm SMALLINT,
+        product_width_cm SMALLINT,
+
+    CONSTRAINT PK__products PRIMARY KEY (product_id)
+);
+    """
+
+sellers_table_sql = """
+    DROP TABLE IF EXISTS sellers;
+
+    CREATE TABLE sellers (
+        seller_id UUID,
+        seller_zip_code_prefix VARCHAR(5) NOT NULL,
+        seller_city VARCHAR(45) NOT NULL,
+        seller_state VARCHAR(2) NOT NULL,
+
+    CONSTRAINT PK__sellers PRIMARY KEY (seller_id),
+    CONSTRAINT seller_zip_code_prefix_valid CHECK (seller_zip_code_prefix ~ '^\d{4,5}$'),
+    CONSTRAINT seller_state_format CHECK (seller_state ~ '^[A-Z]{2}$')
+);
+    """
+product_category_name_translation_table_sql = """
+    DROP TABLE IF EXISTS product_category_name_translation;
+
+    CREATE TABLE product_category_name_translation (
+        product_category_name VARCHAR (50) NOT NULL,
+        product_category_name_english VARCHAR (50) NOT NULL,
+        UNIQUE(product_category_name),
+        UNIQUE(product_category_name_english)
+);
+    """
 
 # Add other table schemas here...
 TABLES = {
@@ -75,6 +133,10 @@ TABLES = {
     'geolocation': geolocation_table_sql,
     'order_items': orderItems_table_sql,
     'order_payments': orderPayments_table_sql,
-    'order_reviews': orderReviews_table_sql
+    'order_reviews': orderReviews_table_sql,
+    'orders': orders_table_sql,
+    'products': products_table_sql,
+    'sellers': sellers_table_sql,
+    'product_category_name_translation': product_category_name_translation_table_sql
     # Add other tables here...
 }
