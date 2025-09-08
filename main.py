@@ -1,5 +1,5 @@
 from db_config import get_engine
-from table_schemas_sql_server_version import TABLES
+from table_schemas import TABLES
 from data_loader import create_table, load_csv_to_table
 
 engine = get_engine()
