@@ -1,3 +1,4 @@
+# Customers
 customers_table_sql = """
 DROP TABLE IF EXISTS customers;
 CREATE TABLE customers (
@@ -12,19 +13,22 @@ CREATE TABLE customers (
     CONSTRAINT customer_state_format CHECK (customer_state ~ '^[A-Z]{2}$')
 );
 """
-
+#Geolocation
 geolocation_table_sql = """
 DROP TABLE IF EXISTS geolocation;
-    CREATE TABLE geolocation (
-        geolocation_zip_code_prefix VARCHAR(5),
-        geolocation_lat NUMERIC(15,10),
-        geolocation_lng NUMERIC(15,10),
-        geolocation_city VARCHAR(38),
-        geolocation_state VARCHAR(2),
-        CONSTRAINT geolocation_zip_code_prefix_valid CHECK (geolocation_zip_code_prefix ~ '^\d{4,5}$'),
-        CONSTRAINT geolocation_state_format CHECK (geolocation_state ~ '^[A-Z]{2}$')
+
+CREATE TABLE geolocation (
+    geolocation_zip_code_prefix VARCHAR(5),
+    geolocation_lat NUMERIC(15,10),
+    geolocation_lng NUMERIC(15,10),
+    geolocation_city VARCHAR(38),
+    geolocation_state VARCHAR(2),
+    
+    CONSTRAINT geolocation_zip_code_prefix_valid CHECK (geolocation_zip_code_prefix ~ '^\d{4,5}$'),
+    CONSTRAINT geolocation_state_format CHECK (geolocation_state ~ '^[A-Z]{2}$')
     );
 """
+#OrderItems
 orderItems_table_sql ="""
 DROP TABLE IF EXISTS order_items;
 CREATE TABLE order_items (
@@ -36,21 +40,27 @@ CREATE TABLE order_items (
     price DECIMAL (8,2) NOT NULL,
     freight_value DECIMAL(8,2) NOT NULL,
 
-    CONSTRAINT PK__order_items PRIMARY KEY (order_id, order_item_id)
+    CONSTRAINT PK__order_items PRIMARY KEY (order_item_id, order_id),
+    CONSTRAINT FK__order_items_order FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    CONSTRAINT FK__order_items_product FOREIGN KEY (product_id) REFERENCES products(product_id),
+    CONSTRAINT FK__order_items_seller FOREIGN KEY (seller_id) REFERENCES sellers(seller_id)
 );
     """
+#OrderPayments
 orderPayments_table_sql = """
 DROP TABLE IF EXISTS order_payments;
 CREATE TABLE order_payments (
-    order_id UUID,
+    order_id UUID NOT NULL,
     payment_sequential SMALLINT NOT NULL,
     payment_type VARCHAR(11) NOT NULL,
     payment_installments INT NOT NULL,
     payment_value DECIMAL(8,2) NOT NULL,
 
-    CONSTRAINT PK__order_payments PRIMARY KEY (order_id)
+    CONSTRAINT PK__order_payments PRIMARY KEY (order_id, payment_sequential),
+    CONSTRAINT FK__order_payments FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
     """
+#OrderReviews
 orderReviews_table_sql = """
 DROP TABLE IF EXISTS order_reviews;
 CREATE TABLE order_reviews (
@@ -63,41 +73,48 @@ CREATE TABLE order_reviews (
     review_answer_timestamp TIMESTAMP NOT NULL,
 
     CONSTRAINT PK__order_reviews PRIMARY KEY (review_id),
+    CONSTRAINT FK__order_reviews FOREIGN KEY (order_id) REFERENCES orders(order_id),
     CONSTRAINT review_score CHECK (review_score BETWEEN 1 AND 5)
 );
 """
+#Orders
 orders_table_sql = """
 DROP TABLE IF EXISTS orders;
 CREATE TABLE orders (
-        order_id UUID,
-        customer_id UUID NOT NULL,
-        order_status VARCHAR (11) NOT NULL,
-        order_purchase_timestamp TIMESTAMP NOT NULL,
-        order_approved_at TIMESTAMP,
-        order_delivered_carrier_date TIMESTAMP,
-        order_delivered_customer_date TIMESTAMP,
-        order_estimated_delivery_date TIMESTAMP NOT NULL,
+    order_id UUID,
+    customer_id UUID NOT NULL,
+    order_status VARCHAR (11) NOT NULL,
+    order_purchase_timestamp TIMESTAMP NOT NULL,
+    order_approved_at TIMESTAMP,
+    order_delivered_carrier_date TIMESTAMP,
+    order_delivered_customer_date TIMESTAMP,
+    order_estimated_delivery_date TIMESTAMP NOT NULL,
 
-    CONSTRAINT PK__orders PRIMARY KEY (order_id)
+    CONSTRAINT PK__orders PRIMARY KEY (order_id),
+    CONSTRAINT FK__orders FOREIGN KEY (customer_id) REFERENCES customers(customer_id)
+
 );
     """
+#Products
 products_table_sql = """
 DROP TABLE IF EXISTS products;
 CREATE TABLE products (
         product_id UUID,
         product_category_name VARCHAR (60),
         product_name_length VARCHAR (11),
-        product_description_lenght SMALLINT,
+        product_description_length SMALLINT,
         product_photos_qty SMALLINT,
         product_weight_g INT,
         product_length_cm SMALLINT,
         product_height_cm SMALLINT,
         product_width_cm SMALLINT,
 
-    CONSTRAINT PK__products PRIMARY KEY (product_id)
+        CONSTRAINT PK__products PRIMARY KEY (product_id),
+        CONSTRAINT FK__products FOREIGN KEY (product_category_name) REFERENCES product_category_name_translation(product_category_name)
+
 );
     """
-
+#Sellers
 sellers_table_sql = """
 DROP TABLE IF EXISTS sellers;
 CREATE TABLE sellers (
@@ -111,18 +128,19 @@ CREATE TABLE sellers (
     CONSTRAINT seller_state_format CHECK (seller_state ~ '^[A-Z]{2}$')
 );
     """
+#Product Category Name Translation
 product_category_name_translation_table_sql = """
 DROP TABLE IF EXISTS product_category_name_translation;
 CREATE TABLE product_category_name_translation (
-    product_category_name VARCHAR (50) NOT NULL,
-    product_category_name_english VARCHAR (50) NOT NULL,
+    product_category_name VARCHAR (60) NOT NULL,
+    product_category_name_english VARCHAR (60) NOT NULL,
     
-    CONSTRAINT unique_category_pair UNIQUE(product_category_name, product_category_name_english)
+    CONSTRAINT PK__product_category_name_translation PRIMARY KEY(product_category_name)
 
 );
     """
 
-# Add other table schemas here...
+
 TABLES = {
     'customers': customers_table_sql,
     'geolocation': geolocation_table_sql,
@@ -133,5 +151,4 @@ TABLES = {
     'products': products_table_sql,
     'sellers': sellers_table_sql,
     'product_category_name_translation': product_category_name_translation_table_sql
-    # Add other tables here...
 }
