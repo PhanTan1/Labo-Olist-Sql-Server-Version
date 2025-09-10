@@ -132,7 +132,9 @@ CREATE TABLE product_category_name_translation (
     product_category_name VARCHAR(60) NOT NULL,
     product_category_name_english VARCHAR(60) NOT NULL,
 
-    CONSTRAINT PK__product_category_name_translation PRIMARY KEY (product_category_name)
+    CONSTRAINT PK__product_category_name_translation PRIMARY KEY (product_category_name),
+    CONSTRAINT FK__products FOREIGN KEY (product_category_name) REFERENCES product_category_name_translation(product_category_name)
+
 );
   """
 
