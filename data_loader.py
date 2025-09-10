@@ -1,8 +1,29 @@
 import pandas as pd
 import uuid
-from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError, DataError
-from sqlalchemy.types import CHAR, String, SmallInteger, Integer, Numeric, DateTime, DECIMAL
+import logging
+from sqlalchemy import text, event
+from sqlalchemy.exc import DataError
+
+# Setup logging for dropped duplicates or load errors
+logging.basicConfig(
+    filename='duplicate_key_drops.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(message)s'
+)
+
+# Mapping of each table to its primary-key columns
+PK_COLUMNS = {
+    'customers': ['customer_id'],
+    'orders': ['order_id'],
+    'order_items': ['order_item_id', 'order_id'],
+    'order_payments': ['order_id', 'payment_sequential'],
+    'order_reviews': ['review_id'],
+    'products': ['product_id'],
+    'sellers': ['seller_id'],
+}
+
+# Tables that have no PK or for which we don’t need deduplication
+FAST_LOAD_TABLES = ['geolocation', 'product_category_name_translation']
 
 def create_table(engine, create_sql):
     with engine.begin() as conn:
@@ -18,8 +39,8 @@ def load_csv_to_table(csv_path, table_name, engine):
     df = pd.read_csv(csv_path)
     df = df.where(pd.notnull(df), None)
 
-    # Format UUIDs based on table
-    uuid_columns = {
+    # Apply UUID formatting
+    uuid_cols = {
         'customers': ['customer_id', 'customer_unique_id'],
         'orders': ['order_id', 'customer_id'],
         'order_items': ['order_id', 'product_id', 'seller_id'],
@@ -28,97 +49,45 @@ def load_csv_to_table(csv_path, table_name, engine):
         'products': ['product_id'],
         'sellers': ['seller_id']
     }
-
-    for col in uuid_columns.get(table_name, []):
+    for col in uuid_cols.get(table_name, []):
         if col in df.columns:
             df[col] = df[col].apply(format_guid)
 
-    # Define dtype mappings
-    dtype_map = {
-        'customers': {
-            'customer_id': CHAR(36),
-            'customer_unique_id': CHAR(36),
-            'customer_zip_code_prefix': String(5),
-            'customer_city': String(32),
-            'customer_state': String(2)
-        },
-        'geolocation': {
-            'geolocation_zip_code_prefix': String(5),
-            'geolocation_lat': Numeric(15, 10),
-            'geolocation_lng': Numeric(15, 10),
-            'geolocation_city': String(38),
-            'geolocation_state': String(2)
-        },
-        'orders': {
-            'order_id': CHAR(36),
-            'customer_id': CHAR(36),
-            'order_status': String(11),
-            'order_purchase_timestamp': DateTime(),
-            'order_approved_at': DateTime(),
-            'order_delivered_carrier_date': DateTime(),
-            'order_delivered_customer_date': DateTime(),
-            'order_estimated_delivery_date': DateTime()
-        },
-        'order_items': {
-            'order_id': CHAR(36),
-            'order_item_id': SmallInteger(),
-            'product_id': CHAR(36),
-            'seller_id': CHAR(36),
-            'shipping_limit_date': DateTime(),
-            'price': DECIMAL(8, 2),
-            'freight_value': DECIMAL(8, 2)
-        },
-        'order_payments': {
-            'order_id': CHAR(36),
-            'payment_sequential': SmallInteger(),
-            'payment_type': String(11),
-            'payment_installments': Integer(),
-            'payment_value': DECIMAL(8, 2)
-        },
-        'order_reviews': {
-            'review_id': CHAR(36),
-            'order_id': CHAR(36),
-            'review_score': Integer(),
-            'review_comment_title': String(50),
-            'review_comment_message': String(255),
-            'review_creation_date': DateTime(),
-            'review_answer_timestamp': DateTime()
-        },
-        'products': {
-            'product_id': CHAR(36),
-            'product_category_name': String(60),
-            'product_name_length': String(11),
-            'product_description_length': SmallInteger(),
-            'product_photos_qty': SmallInteger(),
-            'product_weight_g': Integer(),
-            'product_length_cm': SmallInteger(),
-            'product_height_cm': SmallInteger(),
-            'product_width_cm': SmallInteger()
-        },
-        'sellers': {
-            'seller_id': CHAR(36),
-            'seller_zip_code_prefix': String(5),
-            'seller_city': String(45),
-            'seller_state': String(2)
-        },
-        'product_category_name_translation': {
-            'product_category_name': String(60),
-            'product_category_name_english': String(60)
-        }
-    }
+    # Fast-load tables without deduplication
+    if table_name in FAST_LOAD_TABLES:
+        df.to_sql(table_name, engine, if_exists='append', index=False)
+        print(f"🚀 Fast-loaded {table_name} ({len(df)} rows).")
+        return
 
-    with engine.begin() as conn:
-        for i, row in df.iterrows():
-            try:
-                pd.DataFrame([row]).to_sql(
-                    table_name,
-                    conn,
-                    if_exists='append',
-                    index=False,
-                    method='multi',
-                    dtype=dtype_map.get(table_name)
+    # Drop duplicate keys in the DataFrame before inserting
+    pk = PK_COLUMNS.get(table_name)
+    if pk:
+        dupes = df[df.duplicated(subset=pk, keep='first')]
+        if not dupes.empty:
+            for _, row in dupes.iterrows():
+                logging.info(
+                    f"Dropped duplicate from '{table_name}': {row.to_dict()}\n"
+                    f"Exception: duplicate key value violates unique constraint \"pk__{table_name}\"\n"
+                    f"DETAIL: Key ({', '.join([f'{k}={row[k]}' for k in pk])}) already exists.\n"
                 )
-            except (IntegrityError, DataError) as e:
-                print(f"❌ Error at row {i} in table '{table_name}':")
-                print(row.to_dict())
-                print(f"Exception: {e.orig}")
+        df = df.drop_duplicates(subset=pk, keep='first')
+
+    # Enable fast_executemany for pyodbc bulk insert optimization
+    @event.listens_for(engine, "before_cursor_execute")
+    def receive_before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+        if executemany:
+            cursor.fast_executemany = True
+
+    # Bulk insert the cleaned DataFrame
+    try:
+        df.to_sql(
+            table_name,
+            engine,
+            if_exists='append',
+            index=False,
+            chunksize=1000  # Removed method='multi' for SQL Server compatibility
+        )
+        print(f"✅ Loaded {table_name} ({len(df)} rows).")
+    except DataError as err:
+        logging.error(f"DataError loading '{table_name}': {err}")
+        raise
