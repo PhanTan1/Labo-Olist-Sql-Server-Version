@@ -4,9 +4,9 @@ DROP TABLE IF EXISTS customers;
 CREATE TABLE customers (
     customer_id UNIQUEIDENTIFIER,
     customer_unique_id UNIQUEIDENTIFIER NOT NULL,
-    customer_zip_code_prefix VARCHAR(5) NOT NULL,
-    customer_city VARCHAR(32),
-    customer_state VARCHAR(2),
+    customer_zip_code_prefix NVARCHAR(5) NOT NULL,
+    customer_city NVARCHAR(32),
+    customer_state NVARCHAR(2),
 
     CONSTRAINT PK__customers PRIMARY KEY (customer_id),
     CONSTRAINT customer_zip_code_prefix_valid CHECK (customer_zip_code_prefix LIKE '[0-9][0-9][0-9][0-9]%'),
@@ -17,11 +17,11 @@ CREATE TABLE customers (
 geolocation_table_sql = """
 DROP TABLE IF EXISTS geolocation;
 CREATE TABLE geolocation (
-    geolocation_zip_code_prefix VARCHAR(5),
+    geolocation_zip_code_prefix NVARCHAR(5) NOT NULL,
     geolocation_lat NUMERIC(15,10),
     geolocation_lng NUMERIC(15,10),
-    geolocation_city VARCHAR(38),
-    geolocation_state VARCHAR(2),
+    geolocation_city NVARCHAR(38),
+    geolocation_state NVARCHAR(2),
 
     CONSTRAINT geolocation_zip_code_prefix_valid CHECK (geolocation_zip_code_prefix LIKE '[0-9][0-9][0-9][0-9]%'),
     CONSTRAINT geolocation_state_format CHECK (geolocation_state LIKE '[A-Z][A-Z]')
@@ -33,7 +33,7 @@ DROP TABLE IF EXISTS orders;
 CREATE TABLE orders (
     order_id UNIQUEIDENTIFIER,
     customer_id UNIQUEIDENTIFIER NOT NULL,
-    order_status VARCHAR(11) NOT NULL,
+    order_status NVARCHAR(11) NOT NULL,
     order_purchase_timestamp DATETIME NOT NULL,
     order_approved_at DATETIME,
     order_delivered_carrier_date DATETIME,
@@ -68,7 +68,7 @@ DROP TABLE IF EXISTS order_payments;
 CREATE TABLE order_payments (
     order_id UNIQUEIDENTIFIER NOT NULL,
     payment_sequential SMALLINT NOT NULL,
-    payment_type VARCHAR(11) NOT NULL,
+    payment_type NVARCHAR(11) NOT NULL,
     payment_installments INT NOT NULL,
     payment_value DECIMAL(8,2) NOT NULL,
 
@@ -83,8 +83,8 @@ CREATE TABLE order_reviews (
     review_id UNIQUEIDENTIFIER,
     order_id UNIQUEIDENTIFIER NOT NULL,
     review_score INT NOT NULL,
-    review_comment_title VARCHAR(50),
-    review_comment_message VARCHAR(255),
+    review_comment_title NVARCHAR(50),
+    review_comment_message NVARCHAR(255),
     review_creation_date DATETIME NOT NULL,
     review_answer_timestamp DATETIME NOT NULL,
 
@@ -98,8 +98,8 @@ products_table_sql = """
 DROP TABLE IF EXISTS products;
 CREATE TABLE products (
     product_id UNIQUEIDENTIFIER,
-    product_category_name VARCHAR(60),
-    product_name_length VARCHAR(11),
+    product_category_name NVARCHAR(60),
+    product_name_length NVARCHAR(11),
     product_description_length SMALLINT,
     product_photos_qty SMALLINT,
     product_weight_g INT,
@@ -116,9 +116,9 @@ sellers_table_sql = """
 DROP TABLE IF EXISTS sellers;
 CREATE TABLE sellers (
     seller_id UNIQUEIDENTIFIER,
-    seller_zip_code_prefix VARCHAR(5) NOT NULL,
-    seller_city VARCHAR(45) NOT NULL,
-    seller_state VARCHAR(2) NOT NULL,
+    seller_zip_code_prefix NVARCHAR(5) NOT NULL,
+    seller_city NVARCHAR(45) NOT NULL,
+    seller_state NVARCHAR(2) NOT NULL,
 
     CONSTRAINT PK__sellers PRIMARY KEY (seller_id),
     CONSTRAINT seller_zip_code_prefix_valid CHECK (seller_zip_code_prefix LIKE '[0-9][0-9][0-9][0-9]%'),
@@ -129,8 +129,8 @@ CREATE TABLE sellers (
 product_category_name_translation_table_sql = """
 DROP TABLE IF EXISTS product_category_name_translation;
 CREATE TABLE product_category_name_translation (
-    product_category_name VARCHAR(60) NOT NULL,
-    product_category_name_english VARCHAR(60) NOT NULL,
+    product_category_name NVARCHAR(60) NOT NULL,
+    product_category_name_english NVARCHAR(60) NOT NULL,
 
     CONSTRAINT PK__product_category_name_translation PRIMARY KEY (product_category_name)
 
