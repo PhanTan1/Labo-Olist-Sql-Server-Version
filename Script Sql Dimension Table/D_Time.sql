@@ -1,4 +1,4 @@
-USE SakilaDW
+USE Olist_DW
 GO
 
 CREATE TABLE [dbo].[DimTime](

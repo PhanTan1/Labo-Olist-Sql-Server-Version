@@ -5,7 +5,7 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-Use SakilaDW --change dbname
+Use Olist_DW --change dbname
 GO
 
 CREATE TABLE DimDate(
