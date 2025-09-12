@@ -1,22 +1,25 @@
+DROP TABLE IF EXISTS FactOrder;
 CREATE TABLE FactOrder (
-    order_id NVARCHAR(50),
-    order_item_id INT,
-    customer_id NVARCHAR(50),
-    product_id NVARCHAR(50),
-    seller_id NVARCHAR(50),
-    order_status NVARCHAR(50),
-    order_purchase_timestamp DATETIME,
+    order_id UNIQUEIDENTIFIER NOT NULL,
+    order_item_id SMALLINT NOT NULL,
+    customer_id UNIQUEIDENTIFIER NOT NULL,
+    product_id UNIQUEIDENTIFIER NOT NULL,
+    seller_id UNIQUEIDENTIFIER NOT NULL,
+
+    order_status NVARCHAR(11) NOT NULL,
+    order_purchase_timestamp DATETIME NOT NULL,
     order_delivered_customer_date DATETIME,
-    order_estimated_delivery_date DATETIME,
-    delivery_delay_days INT, -- à calculer dans SSIS ou via une vue
-    is_delivered_late BIT,   -- idem
-    price DECIMAL(10,2),
-    freight_value DECIMAL(10,2),
-    product_category_name NVARCHAR(100),
-    product_name_length INT,
-    product_description_length INT,
-    product_photos_qty INT,
-    payment_type NVARCHAR(50),
+    order_estimated_delivery_date DATETIME NOT NULL,
+
+    price DECIMAL(8,2) NOT NULL,
+    freight_value DECIMAL(8,2) NOT NULL,
+
+    product_category_name NVARCHAR(60),
+    product_name_length NVARCHAR(11),
+    product_description_length SMALLINT,
+    product_photos_qty SMALLINT,
+
+    payment_type NVARCHAR(11),
     payment_installments INT,
-    payment_value DECIMAL(10,2)
+    payment_value DECIMAL(8,2),
 );
