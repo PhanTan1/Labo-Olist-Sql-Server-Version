@@ -99,7 +99,7 @@ DROP TABLE IF EXISTS products;
 CREATE TABLE products (
     product_id UNIQUEIDENTIFIER,
     product_category_name NVARCHAR(60),
-    product_name_length NVARCHAR(11),
+    product_name_length SMALLINT,
     product_description_length SMALLINT,
     product_photos_qty SMALLINT,
     product_weight_g INT,
