@@ -29,35 +29,25 @@ SELECT
 FROM sellers;
 GO
 CREATE VIEW vw_dim_payment AS
-SELECT DISTINCT
+SELECT
+    ROW_NUMBER() OVER (ORDER BY payment_type) AS payment_type_id,
     payment_type
-FROM order_payments;
+FROM (
+    SELECT DISTINCT payment_type FROM order_payments
+) AS distinct_payments;
 GO
 CREATE VIEW vw_dim_order_status AS
-SELECT DISTINCT
-    order_status
-FROM orders;
-GO
-CREATE VIEW vw_dim_product_category_translation AS
 SELECT
-    product_category_name,
-    product_category_name_english
-FROM product_category_name_translation;
+    ROW_NUMBER() OVER (ORDER BY order_status) AS order_status_id,
+    order_status
+FROM (
+    SELECT DISTINCT order_status FROM orders
+) AS distinct_status;
 GO
 CREATE VIEW vw_dim_geolocation AS
 SELECT
     geolocation_zip_code_prefix,
     geolocation_lat,
-    geolocation_lng,
-    geolocation_city,
-    geolocation_state
-FROM geolocation;
+    geolocation_lng
+FROM zip_code_reference;
 GO
-CREATE VIEW vw_dim_date AS
-SELECT DISTINCT
-    CAST(order_purchase_timestamp AS DATE) AS full_date,
-    DATEPART(YEAR, order_purchase_timestamp) AS year,
-    DATEPART(MONTH, order_purchase_timestamp) AS month,
-    DATEPART(DAY, order_purchase_timestamp) AS day,
-    DATEPART(WEEK, order_purchase_timestamp) AS week_of_year
-FROM orders;
