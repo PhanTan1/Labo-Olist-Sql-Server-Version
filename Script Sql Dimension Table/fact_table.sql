@@ -1,42 +1,38 @@
-DROP TABLE IF EXISTS FactOrder;
 CREATE TABLE FactOrder (
     order_id UNIQUEIDENTIFIER NOT NULL,
     order_item_id SMALLINT NOT NULL,
     customer_id UNIQUEIDENTIFIER NOT NULL,
     product_id UNIQUEIDENTIFIER NOT NULL,
     seller_id UNIQUEIDENTIFIER NOT NULL,
-
-    order_status_id INT NOT NULL,
+    
+    order_status_id INT NOT NULL, -- FK vers dim_order_status
+    
     order_purchase_timestamp DATETIME NOT NULL,
-    order_delivered_customer_date DATETIME,
-    order_estimated_delivery_date DATETIME NOT NULL,
+    order_delivered_customer_date DATETIME NULL,
+    order_estimated_delivery_date DATETIME NULL,
 
-    datekey INT NOT NULL,
-    timekey INT NOT NULL,
+    datekey INT NOT NULL, -- FK vers DimDate
+    timekey INT NOT NULL, -- FK vers DimTime
 
-    price DECIMAL(8,2) NOT NULL,
-    freight_value DECIMAL(8,2) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    freight_value DECIMAL(10,2) NOT NULL,
 
-    product_category_name NVARCHAR(60),
-    product_name_length SMALLINT,
-    product_description_length SMALLINT,
-    product_photos_qty SMALLINT,
+    product_category_name NVARCHAR(100) NULL,
+    product_name_length SMALLINT NULL,
+    product_description_length SMALLINT NULL,
+    product_photos_qty SMALLINT NULL,
 
-    payment_type NVARCHAR(11),
-    payment_installments INT,
-    payment_value DECIMAL(8,2),
-
+    -- Clé primaire composite
     CONSTRAINT PK_FactOrder PRIMARY KEY (order_id, order_item_id),
 
-    -- Clés étrangères vers les dimensions
+    -- Clés étrangères (à adapter selon ton schéma)
     CONSTRAINT FK_FactOrder_Customer FOREIGN KEY (customer_id) REFERENCES dim_customers(customer_id),
-    CONSTRAINT FK_FactOrder_Seller FOREIGN KEY (seller_id) REFERENCES dim_sellers(seller_id),
     CONSTRAINT FK_FactOrder_Product FOREIGN KEY (product_id) REFERENCES dim_products(product_id),
-    CONSTRAINT FK_FactOrder_OrderStatus FOREIGN KEY (order_status_id) REFERENCES dim_order_status(order_status_id),
-    CONSTRAINT FK_FactOrder_Date FOREIGN KEY (datekey) REFERENCES DimDate(DateKey),
-    CONSTRAINT FK_FactOrder_Time FOREIGN KEY (timekey) REFERENCES DimTime(TimeKey)
+    CONSTRAINT FK_FactOrder_Seller FOREIGN KEY (seller_id) REFERENCES dim_sellers(seller_id),
+    CONSTRAINT FK_FactOrder_Status FOREIGN KEY (order_status_id) REFERENCES dim_order_status(order_status_id),
+    CONSTRAINT FK_FactOrder_Date FOREIGN KEY (datekey) REFERENCES DimDate(datekey),
+    CONSTRAINT FK_FactOrder_Time FOREIGN KEY (timekey) REFERENCES DimTime(timekey)
 );
-
 
 
 DROP TABLE IF EXISTS fact_order_payments;

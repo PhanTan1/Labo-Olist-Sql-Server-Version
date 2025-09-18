@@ -76,3 +76,11 @@ CREATE TABLE dim_review_score (
     CONSTRAINT CHK_review_score_range CHECK (review_score BETWEEN 1 AND 5)
 );
 
+INSERT INTO dim_review_score (review_score, review_label, is_positive, is_neutral, is_negative)
+VALUES 
+    (1, 'Very Bad',     0, 0, 1),
+    (2, 'Bad',          0, 0, 1),
+    (3, 'Average',      0, 1, 0),
+    (4, 'Good',         1, 0, 0),
+    (5, 'Excellent',    1, 0, 0);
+

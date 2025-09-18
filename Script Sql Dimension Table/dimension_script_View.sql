@@ -54,45 +54,43 @@ GO
 CREATE VIEW vw_fact_order AS
 SELECT 
     o.order_id,
-    oi.order_item_id,
+    CAST(oi.order_item_id AS SMALLINT) AS order_item_id,
     o.customer_id,
     oi.product_id,
     oi.seller_id,
 
-    -- Encodage simple du statut en entier
+    -- Encodage du statut
     CAST(
-    CASE 
-        WHEN o.order_status = 'delivered' THEN 1
-        WHEN o.order_status = 'shipped' THEN 2
-        WHEN o.order_status = 'processing' THEN 3
-        WHEN o.order_status = 'canceled' THEN 4
-        WHEN o.order_status = 'approved' THEN 5
-        WHEN o.order_status = 'invoiced' THEN 6
-        WHEN o.order_status = 'created' THEN 7
-        WHEN o.order_status = 'unavailable' THEN 8
-        ELSE 0
-    END
-AS INT) AS order_status_id,
+        CASE 
+            WHEN o.order_status = 'delivered' THEN 1
+            WHEN o.order_status = 'shipped' THEN 2
+            WHEN o.order_status = 'processing' THEN 3
+            WHEN o.order_status = 'canceled' THEN 4
+            WHEN o.order_status = 'approved' THEN 5
+            WHEN o.order_status = 'invoiced' THEN 6
+            WHEN o.order_status = 'created' THEN 7
+            WHEN o.order_status = 'unavailable' THEN 8
+            ELSE 0
+        END
+    AS INT) AS order_status_id,
 
     o.order_purchase_timestamp,
     o.order_delivered_customer_date,
     o.order_estimated_delivery_date,
 
-    -- DateKey et TimeKey à générer via DimDate / DimTime ou fonctions
-    CAST(FORMAT(o.order_purchase_timestamp, 'yyyyMMdd') AS INT) AS datekey,
-    CAST(FORMAT(o.order_purchase_timestamp, 'HHmmss') AS INT) AS timekey,
+    -- DateKey et TimeKey
+    CAST(CONVERT(VARCHAR(8), o.order_purchase_timestamp, 112) AS INT) AS datekey,
+    CAST(DATEPART(HOUR, o.order_purchase_timestamp) * 10000 +
+         DATEPART(MINUTE, o.order_purchase_timestamp) * 100 +
+         DATEPART(SECOND, o.order_purchase_timestamp) AS INT) AS timekey,
 
-    oi.price,
-    oi.freight_value,
+    CAST(oi.price AS DECIMAL(10,2)) AS price,
+    CAST(oi.freight_value AS DECIMAL(10,2)) AS freight_value,
 
     p.product_category_name,
     p.product_name_length,
     p.product_description_length,
-    p.product_photos_qty,
-
-    op.payment_type,
-    op.payment_installments,
-    op.payment_value
+    p.product_photos_qty
 
 FROM orders o
 JOIN order_items oi ON o.order_id = oi.order_id
@@ -110,6 +108,7 @@ SELECT
 FROM order_payments op
 JOIN orders o ON op.order_id = o.order_id;
 GO
+
 CREATE VIEW vw_fact_review AS
 SELECT 
     r.review_id,
