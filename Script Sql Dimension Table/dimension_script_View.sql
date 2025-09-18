@@ -96,9 +96,9 @@ AS INT) AS order_status_id,
 
 FROM orders o
 JOIN order_items oi ON o.order_id = oi.order_id
-JOIN products p ON oi.product_id = p.product_id
-LEFT JOIN order_payments op ON o.order_id = op.order_id;
+JOIN products p ON oi.product_id = p.product_id;
 GO
+
 CREATE VIEW vw_fact_order_payments AS
 SELECT 
     op.order_id,

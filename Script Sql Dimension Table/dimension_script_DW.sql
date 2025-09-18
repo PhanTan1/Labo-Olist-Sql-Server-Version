@@ -41,7 +41,7 @@ CREATE TABLE dim_products (
 
 DROP TABLE IF EXISTS dim_order_status;
 CREATE TABLE dim_order_status (
-    order_status_id INT PRIMARY KEY,
+    order_status_id INT IDENTITY(1,1) PRIMARY KEY,
     order_status NVARCHAR(11) NOT NULL
 );
 
@@ -58,7 +58,7 @@ CREATE TABLE dim_geolocation (
 
 DROP TABLE IF EXISTS dim_payment_type;
 CREATE TABLE dim_payment_type (
-    payment_type_id INT PRIMARY KEY,
+    payment_type_id INT IDENTITY(1,1) PRIMARY KEY,
     payment_type NVARCHAR(20) NOT NULL,
 
     CONSTRAINT CHK_payment_type_format CHECK (payment_type NOT LIKE '%[^a-zA-Z_]%')
